@@ -1,0 +1,8 @@
+**/.vs/**
+**/.vscode/**
+**/out/**
+**/build/**
+**/CMakeFiles/**
+CMakeCache.txt
+CMakeSettings.json
+CMakeUserPresets.json
