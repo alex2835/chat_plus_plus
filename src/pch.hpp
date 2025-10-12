@@ -21,6 +21,13 @@ namespace websocket = beast::websocket;
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 
+// json
+#include <nlohmann/json.hpp>
+using nlohmann::json;
+
+// magic_enum
+#include <magic_enum.hpp>
+
 // Standard library
 #include <string>
 #include <string_view>
@@ -30,3 +37,4 @@ using tcp = asio::ip::tcp;
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <unordered_map>
