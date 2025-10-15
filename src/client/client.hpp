@@ -1,8 +1,5 @@
 #pragma once
 #include "pch.hpp"
-#include <chrono>
-#include <iomanip>
-#include <sstream>
 #include "database.hpp"
 
 namespace beast = boost::beast;
@@ -43,9 +40,10 @@ public:
     }
     
     void connect() {
-        if (isConnected_) return;
+        if (isConnected_) 
+            return;
         ioContext_.restart();
-        
+
         try {
             tcp::resolver resolver(ioContext_);
             auto endpoints = resolver.resolve(serverAddress_, serverPort_);
@@ -66,16 +64,10 @@ public:
             isConnected_ = true;
             statusText_ = "Connected to " + serverAddress_ + ":" + serverPort_;
             
-            // Send userName as first message
-            if (!userName_.empty()) {
-                std::string joinMessage = "/join " + userName_;
-                sendMessage(joinMessage);
-            }
-            
             // Start reading messages
             startReadLoop();
-            
-        } catch (std::exception& e) {
+        } 
+        catch (std::exception& e) {
             statusText_ = "Connection failed: " + std::string(e.what());
             isConnected_ = false;
         }
@@ -91,7 +83,9 @@ public:
         } catch (...) {}
 
         ioContext_.stop();
-        if (readThread_.joinable())
+
+        // Only join if we're not calling from the read thread itself
+        if (readThread_.joinable() and std::this_thread::get_id() != readThread_.get_id())
             readThread_.join();
 
         statusText_ = "Disconnected";
@@ -143,8 +137,6 @@ private:
 
                     auto message = beast::buffers_to_string(buffer.data());
                     auto messageJson = nlohmann::json::parse(std::move(message));
-
-
                     buffer.consume(buffer.size());
                 } 
                 catch (std::exception& e)
@@ -157,14 +149,6 @@ private:
                 }
             }
         });
-    }
-    
-    std::string getTimestamp() {
-        auto now = std::chrono::system_clock::now();
-        auto timePoint = std::chrono::system_clock::to_time_t(now);
-        std::stringstream ss;
-        ss << std::put_time(std::localtime(&timePoint), "%H:%M:%S");
-        return ss.str();
     }
 };
 
