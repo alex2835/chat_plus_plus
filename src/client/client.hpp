@@ -136,7 +136,7 @@ private:
                     websocket_.read(buffer);
 
                     auto message = beast::buffers_to_string(buffer.data());
-                    auto messageJson = nlohmann::json::parse(std::move(message));
+                    // auto messageJson = nlohmann::json::parse(std::move(message));
                     buffer.consume(buffer.size());
                 } 
                 catch (std::exception& e)

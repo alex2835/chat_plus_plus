@@ -2,7 +2,10 @@
 **/.vscode/**
 **/out/**
 **/build/**
+**/.idea/**
+**/conan/**
 **/CMakeFiles/**
 CMakeCache.txt
+cmake_install.cmake
 CMakeSettings.json
 CMakeUserPresets.json
