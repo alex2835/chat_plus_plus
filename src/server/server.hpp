@@ -1,35 +1,61 @@
 #pragma once
-#include "pch.hpp"
 #include "common/helpers.hpp"
+#include "common/message.hpp"
+#include "common/message_dispatcher.hpp"
 #include "session.hpp"
 
 class Server
 {
 private:
-    asio::io_context ioContext_;
-    asio::strand<asio::io_context::executor_type> strand_;
     std::string_view address_;
     int port_;
+    asio::io_context ioContext_;
+    asio::strand<asio::io_context::executor_type> sessionStrand_;
     std::unordered_map<size_t, std::shared_ptr<Session>> sessions_;
-    std::atomic<size_t> nextSessionId_{0};
+    std::atomic<size_t> nextSessionId_{ 0 };
+    MessageDispatcher messageDispatcher_;
 
 public:
-    Server(std::string_view address, int port, int threads = 1)
-        : ioContext_(threads),
-          strand_(asio::make_strand(ioContext_)),
-          address_(address),
-          port_(port)
-    {}
+    Server( std::string_view address, int port, int threads = 1 )
+        : ioContext_( threads ),
+          sessionStrand_( asio::make_strand( ioContext_ ) ),
+          address_( address ),
+          port_( port )
+    {
+    }
 
     void run();
-    asio::awaitable<void> startListener(std::string_view address, const int port);
-    void removeSession(size_t sessionId);
+    awaitable<void> startListener( std::string_view address, const int port );
+    void removeSession( size_t sessionId );
 
-    asio::awaitable<void> broadcast(const std::string& message);
-    asio::awaitable<void> broadcastExcept(const size_t excludeId, const std::string& message);
+    awaitable<void> broadcast( const std::string& message );
+    awaitable<void> broadcastExcept( const size_t excludeId, const std::string& message );
 
-    asio::awaitable<void> sendToSession(const size_t sessionId,const std::string& message);
-    size_t getSessionCount() const;
+    // awaitable<void> sendToSession( const size_t sessionId, const std::string& message );
+
+    awaitable<std::vector<std::shared_ptr<Session>>> getSessions() const;
     void closeAllSessions();
-};
 
+    template <typename EnumType, typename ControllerType>
+    void addController( EnumType type, ControllerType&& controller )
+    {
+        messageDispatcher_.addController( type, std::forward<ControllerType>( controller ) );
+    }
+
+    template <std::ranges::input_range Range>
+        requires std::same_as<std::ranges::range_value_t<Range>, std::shared_ptr<Session>>
+    awaitable<void> sendToSessions( Range&& sessions, const std::string& message )
+    {
+        for ( auto& session : sessions )
+        {
+            try
+            {
+                co_await session->send( message );
+            }
+            catch ( ... )
+            {
+                // Session will be removed by its own error handling
+            }
+        }
+    }
+};

@@ -1,43 +1,29 @@
 #pragma once
-#include "pch.hpp"
-#include <string>
-#include <vector>
+#include "datamodel.hpp"
 
-enum class ResponseType
+enum class ServerMessageType
 {
-    Rooms,
-    RoomMessages,
+    RoomsMessagesResponse,
 
     NewRoom,
     NewMessage
 };
 
-struct RoomsResponse
+struct RoomsMessagesResponse
 {
-    std::vector<std::string> roomNames;
+    std::vector<ChatRoom> roomsMessages;
+    NLOJHMANN_DEFINE_TYPE_INTRUSIVE( RoomsMessagesResponse, roomsMessages )
 };
-NLOJHMANN_DEFINE_TYPE_INTRUSIVE(RoomsResponse, roomNames)
 
-
-struct RoomMessagesResponse
+struct NewRoom
 {
-    std::string roomName;
-    std::vector<std::string> messages;
+    std::string room;
+    NLOJHMANN_DEFINE_TYPE_INTRUSIVE( NewRoomResponse, room )
 };
-NLOJHMANN_DEFINE_TYPE_INTRUSIVE(RoomsResponse, roomNames)
 
-
-struct NewRoomResponse
+struct NewMessage
 {
-    std::string roomName;
+    std::string room;
+    ChatMessage message;
+    NLOJHMANN_DEFINE_TYPE_INTRUSIVE( NewMessageResponse, room, message )
 };
-NLOJHMANN_DEFINE_TYPE_INTRUSIVE(NewRoomResponse, roomName)
-
-
-struct NewMessageResponse
-{
-    std::string roomName;
-    std::string sender;
-    std::string content;
-};
-NLOJHMANN_DEFINE_TYPE_INTRUSIVE(NewMessageResponse, roomName, sender, content)

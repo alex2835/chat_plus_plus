@@ -20,6 +20,7 @@ namespace http = beast::http;
 namespace websocket = beast::websocket;
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
+using asio::awaitable;
 
 // json
 #include <nlohmann/json.hpp>
@@ -38,3 +39,6 @@ using nlohmann::json;
 #include <mutex>
 #include <atomic>
 #include <unordered_map>
+#include <ranges>
+#include <concepts>
+#include <algorithm>

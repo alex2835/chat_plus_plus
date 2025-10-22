@@ -1,31 +1,22 @@
 #pragma once
-#include "pch.hpp"
-#include <string>
-#include <vector>
 
-enum class RequestType {
-    GetRooms,
-    GetRoomMessages,
-    
-    PostRoom,
+enum class ClientMessageType
+{
+    PostUserName,
+    PostNewRoom,
     PostMessage
 };
 
-struct GetRoomMessagesRequest {
-    std::string roomName;
+struct PostRoomRequest
+{
+    std::string room;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( PostRoomRequest, room )
 };
-NLOHMANN_DEFINE_TYPE_INTRUSIVE(GetRoomMessagesRequest, roomName)
 
-
-struct PostRoomRequest {
-    std::string roomName;
+struct PostMessageRequest
+{
+    std::string user;
+    std::string room;
+    std::string message;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( PostMessageRequest, user, room, message )
 };
-NLOHMANN_DEFINE_TYPE_INTRUSIVE(PostRoomRequest, roomName)
-
-
-struct PostMessageRequest {
-    std::string roomName;
-    std::string sender;
-    std::string content;
-};
-NLOHMANN_DEFINE_TYPE_INTRUSIVE(PostMessageRequest, roomName, sender, content)

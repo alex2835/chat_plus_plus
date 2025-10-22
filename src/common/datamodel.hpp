@@ -1,14 +1,16 @@
 #pragma once
-#include <string>
-#include <vector>
 
-struct ChatMessage {
+struct ChatMessage
+{
     std::string sender;
     std::string content;
     std::string timestamp;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( ChatMessage, sender, content, timestamp )
 };
 
-struct ChatRoom {
+struct ChatRoom
+{
     std::string name;
     std::vector<ChatMessage> messages;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( ChatRoom, name, messages )
 };

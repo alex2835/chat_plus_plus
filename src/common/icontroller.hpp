@@ -1,10 +1,9 @@
 #pragma once
-#include "pch.hpp"
-#include <functional>
 
-class IController {
+class IController
+{
 public:
     IController() = default;
     virtual ~IController() = default;
-    virtual void call(const json& msg) = 0;
+    virtual awaitable<void> call( const json& msg ) = 0;
 };
