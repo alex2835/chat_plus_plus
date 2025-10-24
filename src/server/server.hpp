@@ -31,8 +31,6 @@ public:
     awaitable<void> broadcast( const std::string& message );
     awaitable<void> broadcastExcept( const size_t excludeId, const std::string& message );
 
-    // awaitable<void> sendToSession( const size_t sessionId, const std::string& message );
-
     awaitable<std::vector<std::shared_ptr<Session>>> getSessions() const;
     void closeAllSessions();
 
@@ -54,7 +52,8 @@ public:
             }
             catch ( ... )
             {
-                // Session will be removed by its own error handling
+                session->close();
+                removeSession( session->getSessionId() );
             }
         }
     }

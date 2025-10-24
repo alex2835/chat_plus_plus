@@ -59,8 +59,7 @@ awaitable<void> Server::startListener( std::string_view address, const int port 
             auto session = std::make_shared<Session>( *this, sessionId, std::move( socket ) );
 
             // Add to sessions map on the strand
-            asio::post( sessionStrand_,
-                        [this, sessionId, session]() { sessions_[sessionId] = session; } );
+            asio::post( sessionStrand_, [this, sessionId, session]() { sessions_[sessionId] = session; } );
 
             std::cout << "Info: New session created: " << sessionId << "\n";
 
@@ -106,8 +105,8 @@ awaitable<void> Server::broadcastExcept( const size_t excludeId,
                                                        getSessions(),
                                                        asio::use_awaitable );
     const auto filterClause = [excludeId]( const auto& session ) { return session->getSessionId() != excludeId; };
-    auto filteredSessions = sessionsCopy | std::views::filter( filterClause );
-    co_await sendToSessions( filteredSessions, message );
+    auto filteredSessionsCopy = sessionsCopy | std::views::filter( filterClause );
+    co_await sendToSessions( filteredSessionsCopy, message );
 }
 
 awaitable<std::vector<std::shared_ptr<Session>>> Server::getSessions() const

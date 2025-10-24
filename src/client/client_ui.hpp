@@ -7,14 +7,14 @@
 #include <ftxui/screen/color.hpp>
 
 #include "client.hpp"
-#include "client_database.hpp"
+#include "client_data.hpp"
 using namespace ftxui;
 
 class ChatClientUI
 {
     // Client reference
+    ClientData& clientData_;
     ChatClient& client_;
-    ClientDatabase& database_;
 
     // Screen
     ScreenInteractive screen_;
@@ -29,8 +29,9 @@ class ChatClientUI
     std::vector<std::string> tabEntries_ = { "Settings", "Chat" };
     std::string usernameInput_;
     std::string messageInput_;
-    std::string serverInput_ = "localhost";
+    std::string addresInput_ = "localhost";
     std::string portInput_ = "8080";
+    std::string selectedRoom_;
 
     // Components
     Component usernameField_;
@@ -46,9 +47,9 @@ class ChatClientUI
     Component mainRenderer_;
 
 public:
-    ChatClientUI( ChatClient& client, ClientDatabase& database )
-        : client_( client ), 
-          database_( database ), 
+    ChatClientUI(  ClientData& database, ChatClient& client )
+        : clientData_( database ), 
+          client_( client ), 
           screen_( ScreenInteractive::Fullscreen() )
     {
         setupComponents();
@@ -64,8 +65,8 @@ private:
     {
         if ( !client_.isConnected() )
         {
-            client_.setUserName( usernameInput_ );
-            client_.setServer( serverInput_, portInput_ );
+            clientData_.setUserName( usernameInput_ );
+            client_.setServer( addresInput_, portInput_ );
             client_.connect();
         }
     }
@@ -73,16 +74,14 @@ private:
     void onDisconnect()
     {
         if ( client_.isConnected() )
-        {
             client_.disconnect();
-        }
     }
 
     void onSend()
     {
         if ( !messageInput_.empty() && client_.isConnected() )
         {
-            client_.sendMessage( messageInput_ );
+            client_.sendChatMessage( selectedRoom_, messageInput_ );
             messageInput_.clear();
         }
     }
@@ -102,7 +101,7 @@ private:
     {
         // Connections settings
         usernameField_ = Input( &usernameInput_, "Enter username..." );
-        serverField_ = Input( &serverInput_, "Server address..." );
+        serverField_ = Input( &addresInput_, "Server address..." );
         portField_ = Input( &portInput_, "Port..." );
         connectButton_ = Button( "Connect", [this] { onConnect(); } );
         disconnectButton_ = Button( "Disconnect", [this] { onDisconnect(); } );
@@ -178,8 +177,9 @@ private:
     {
         return hbox( {
                    text( "Status: " ),
-                   text( client_.getStatus() ) |
-                       ( client_.isConnected() ? color( Color::Green ) : color( Color::Red ) ),
+                   text( client_.getStatus() ) | ( client_.isConnected() 
+                                                    ? color( Color::Green )
+                                                    : color( Color::Red ) ),
                    filler(),
                    text( "User: " + usernameInput_ ),
                } ) |
@@ -213,14 +213,14 @@ private:
 
     Element renderChatView()
     {
-        std::vector<std::string> msgs;
-        // auto msgs = database_.getMessages();
+        auto rooms = clientData_.getRoomMessages( selectedRoom_ );
+        std::vector<ChatMessage> msgs;
+        if ( selectedRoom_.empty() )
+            msgs = clientData_.getRoomMessages( selectedRoom_ );
 
         Elements messageElements;
         for ( const auto& msg : msgs )
-        {
-            messageElements.push_back( text( msg ) );
-        }
+            messageElements.push_back( text( msg.content ) );
 
         return vbox( {
                    text( "Chat Messages" ) | bold | center,

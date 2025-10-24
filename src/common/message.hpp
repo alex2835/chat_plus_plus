@@ -16,10 +16,10 @@ struct Message
 };
 
 template <typename E, typename T>
-Message<T> makeMessage( E type, const T& data )
+json makeMessage( E type, const T& data )
 {
     std::string typeName = std::string( magic_enum::enum_name( type ) );
-    return Message<T>{ Metadata{ .type = typeName }, data };
+    return json( Message<T>{ Metadata{ .type = typeName }, data } );
 }
 
 // Specialization for JSON serialization of template class

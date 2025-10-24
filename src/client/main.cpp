@@ -1,13 +1,13 @@
-#include "client.hpp"
-#include "client_database.hpp"
-#include "client_ui.hpp"
 #include "pch.hpp"
+#include "client.hpp"
+#include "client_data.hpp"
+#include "client_ui.hpp"
 
 int main()
 {
-    ClientDatabase database;
-    ChatClient client( database );
-    ChatClientUI ui( client, database );
+    ClientData clientData;
+    ChatClient client( clientData );
+    ChatClientUI ui( clientData, client );
     ui.run();
     return 0;
 }
