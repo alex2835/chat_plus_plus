@@ -14,6 +14,10 @@
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/awaitable.hpp>
 
+// Boost.Program_Options
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 // Common namespaces
 namespace beast = boost::beast;
 namespace http = beast::http;

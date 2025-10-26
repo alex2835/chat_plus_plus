@@ -3,16 +3,16 @@
 
 enum class ServerMessageType
 {
-    RoomsMessagesResponse,
+    InitSessionResponse,
 
     NewRoom,
     NewMessage
 };
 
-struct RoomsMessagesResponse
+struct InitSessionResponse
 {
     std::vector<ChatRoom> roomsMessages;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE( RoomsMessagesResponse, roomsMessages )
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( InitSessionResponse, roomsMessages )
 };
 
 struct NewRoom

@@ -83,7 +83,8 @@ awaitable<void> Session::readLoop()
         catch ( const boost::system::system_error& se )
         {
             if ( se.code() != websocket::error::closed )
-                std::cerr << "Read error in session " << sessionId_ << ": " << formatWebSocketError( se.code() ) << "\n";
+                std::cerr << "Read error in session " << sessionId_ << ": "
+                          << formatWebSocketError( se.code() ) << "\n";
             break;
         }
     }
@@ -91,11 +92,7 @@ awaitable<void> Session::readLoop()
 
 awaitable<void> Session::handleMessage( std::string message )
 {
-    std::cout << message << "\n";
-
-    // std::string responseText;
-    // co_await send(responseText);
-    co_return;
+    co_await server_.dispatch( getSessionId(), json::parse( message ) );
 }
 
 void Session::removeFromServer()

@@ -175,11 +175,12 @@ private:
 
     Element renderStatusBar()
     {
+        const auto statuTextColor = client_.isConnected() 
+                                        ? color( Color::Green ) 
+                                        : color( Color::Red );
         return hbox( {
                    text( "Status: " ),
-                   text( client_.getStatus() ) | ( client_.isConnected() 
-                                                    ? color( Color::Green )
-                                                    : color( Color::Red ) ),
+                   text( client_.getStatus() ) | statuTextColor,
                    filler(),
                    text( "User: " + usernameInput_ ),
                } ) |

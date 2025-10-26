@@ -2,6 +2,7 @@
 
 enum class ClientMessageType
 {
+    InitSession,
     PostUserName,
     PostNewRoom,
     PostMessage

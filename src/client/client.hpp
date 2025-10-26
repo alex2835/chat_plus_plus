@@ -82,6 +82,9 @@ public:
             // Start read and write threads
             startReadLoop();
             startWriteLoop();
+
+            // Request initial chat rooms and messages
+            sendMessage( makeMessage( ClientMessageType::InitSession, json() ) );
         }
         catch ( std::exception& e )
         {
@@ -145,15 +148,13 @@ public:
             .room = room,
             .message = content,
         };
-        json requestJson = makeMessage( ClientMessageType::PostMessage, req );
-        sendMessage( requestJson.dump() );
+        sendMessage( makeMessage( ClientMessageType::PostMessage, req ) );
     }
 
     void sendChatRoom( const std::string& room )
     {
         PostRoomRequest req{ .room = room };
-        json requestJson = makeMessage( ClientMessageType::PostNewRoom, req );
-        sendMessage( requestJson.dump() );
+        sendMessage( makeMessage( ClientMessageType::PostNewRoom, req ) );
     }
 
 private:
@@ -183,15 +184,15 @@ private:
                         auto message = beast::buffers_to_string( buffer.data() );
                         json messageJson = nlohmann::json::parse( std::move( message ) );
                         
-                        auto typeStr = messageJson["meta"]["type"].get<std::string>();
+                        auto typeStr = messageJson.at( "metadata" ).at( "type" ).get<std::string>();
                         auto type = magic_enum::enum_cast<ServerMessageType>( typeStr );
                         json dataJson = messageJson["data"];
                         
                         switch ( type.value() )
                         {
-                            case ServerMessageType::RoomsMessagesResponse:
+                            case ServerMessageType::InitSessionResponse:
                             {
-                                auto response = dataJson.get<RoomsMessagesResponse>();
+                                auto response = dataJson.get<InitSessionResponse>();
                                 for ( const auto& room : response.roomsMessages )
                                     clientData_.addMessages( room.name, room.messages );
                                 break;

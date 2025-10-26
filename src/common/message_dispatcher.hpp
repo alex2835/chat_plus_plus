@@ -19,14 +19,14 @@ public:
         controllers_.emplace( typeName, std::move( ref ) );
     }
 
-    awaitable<void> dispatch( const json& message )
+    awaitable<void> dispatch( const size_t sessionId, const json& message )
     {
         std::string name = message.at( "metadata" ).at( "type" ).get<std::string>();
         json data = message.at( "data" );
 
         auto it = controllers_.find( name );
         if ( it != controllers_.end() )
-            co_await it->second->call( data );
+            co_await it->second->call( sessionId, data );
         else
             std::cerr << "Error: IController not found for type: " << name << "\n";
     }

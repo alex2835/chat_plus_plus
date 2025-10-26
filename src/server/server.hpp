@@ -16,23 +16,37 @@ private:
     MessageDispatcher messageDispatcher_;
 
 public:
-    Server( std::string_view address, int port, int threads = 1 )
+    Server( std::string_view address,
+            int port,
+            int threads = 1 )
         : ioContext_( threads ),
           sessionStrand_( asio::make_strand( ioContext_ ) ),
           address_( address ),
           port_( port )
+    {}
+
+    asio::io_context& getIOContext()
     {
+        return ioContext_;
     }
 
     void run();
     awaitable<void> startListener( std::string_view address, const int port );
-    void removeSession( size_t sessionId );
 
     awaitable<void> broadcast( const std::string& message );
     awaitable<void> broadcastExcept( const size_t excludeId, const std::string& message );
+    awaitable<void> sendToSession( const size_t sessionId, const std::string& message );
 
+    awaitable<void> addSessions( const size_t sessionId, std::shared_ptr<Session> session );
     awaitable<std::vector<std::shared_ptr<Session>>> getSessions() const;
+    awaitable<std::shared_ptr<Session>> findSession( const size_t sessionId ) const;
+    void removeSession( size_t sessionId );
     void closeAllSessions();
+
+    awaitable<void> dispatch( const size_t sessionId, const json& message )
+    {
+        co_await messageDispatcher_.dispatch( sessionId, message );
+    }
 
     template <typename EnumType, typename ControllerType>
     void addController( EnumType type, ControllerType&& controller )

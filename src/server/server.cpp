@@ -1,6 +1,5 @@
-#include "server.hpp"
-
 #include "pch.hpp"
+#include "server.hpp"
 
 void Server::run()
 {
@@ -59,7 +58,7 @@ awaitable<void> Server::startListener( std::string_view address, const int port 
             auto session = std::make_shared<Session>( *this, sessionId, std::move( socket ) );
 
             // Add to sessions map on the strand
-            asio::post( sessionStrand_, [this, sessionId, session]() { sessions_[sessionId] = session; } );
+            co_await addSessions( sessionId, session );
 
             std::cout << "Info: New session created: " << sessionId << "\n";
 
@@ -92,30 +91,55 @@ void Server::removeSession( size_t sessionId )
 
 awaitable<void> Server::broadcast( const std::string& message )
 {
-    const auto sessionsCopy = co_await asio::co_spawn( sessionStrand_, 
-                                                       getSessions(),
-                                                       asio::use_awaitable );
+    const auto sessionsCopy = co_await getSessions();
     co_await sendToSessions( sessionsCopy, message );
 }
 
 awaitable<void> Server::broadcastExcept( const size_t excludeId,
                                          const std::string& message )
 {
-    const auto sessionsCopy = co_await asio::co_spawn( sessionStrand_, 
-                                                       getSessions(),
-                                                       asio::use_awaitable );
+    const auto sessionsCopy = co_await getSessions();
     const auto filterClause = [excludeId]( const auto& session ) { return session->getSessionId() != excludeId; };
     auto filteredSessionsCopy = sessionsCopy | std::views::filter( filterClause );
     co_await sendToSessions( filteredSessionsCopy, message );
 }
 
+awaitable<void> Server::sendToSession( const size_t sessionId, const std::string& message )
+{
+    auto session = co_await findSession( sessionId );
+    if ( not session )
+        co_return;
+        
+    auto sessions = { session };
+    co_await sendToSessions( sessions, message );
+}
+
+awaitable<void> Server::addSessions( const size_t sessionId, std::shared_ptr<Session> session )
+{
+    co_await asio::post( asio::bind_executor( sessionStrand_, asio::use_awaitable ) );
+
+    sessions_.emplace( sessionId, std::move( session ) );
+}
+
 awaitable<std::vector<std::shared_ptr<Session>>> Server::getSessions() const
 {
+    co_await asio::post( asio::bind_executor( sessionStrand_, asio::use_awaitable ) );
+
     std::vector<std::shared_ptr<Session>> result;
     result.reserve( sessions_.size() );
     for ( const auto& [id, session] : sessions_ )
         result.push_back( session );
     co_return result;
+}
+
+awaitable<std::shared_ptr<Session>> Server::findSession( const size_t sessionId ) const
+{
+    co_await asio::post( asio::bind_executor( sessionStrand_, asio::use_awaitable ) );
+
+    auto it = sessions_.find( sessionId );
+    if ( it != sessions_.end() )
+        co_return it->second;
+    co_return nullptr;
 }
 
 void Server::closeAllSessions()
@@ -124,9 +148,7 @@ void Server::closeAllSessions()
         [this]()
         {
             for ( auto& [id, session] : sessions_ )
-            {
                 session->close();
-            }
             sessions_.clear();
         } );
 }
