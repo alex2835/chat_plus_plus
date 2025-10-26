@@ -33,26 +33,26 @@ public:
     void run();
     awaitable<void> startListener( std::string_view address, const int port );
 
-    awaitable<void> broadcast( const std::string& message );
-    awaitable<void> broadcastExcept( const size_t excludeId, const std::string& message );
-    awaitable<void> sendToSession( const size_t sessionId, const std::string& message );
-
-    awaitable<void> addSessions( const size_t sessionId, std::shared_ptr<Session> session );
+    awaitable<void> addSession( const size_t sessionId, std::shared_ptr<Session> session );
     awaitable<std::vector<std::shared_ptr<Session>>> getSessions() const;
     awaitable<std::shared_ptr<Session>> findSession( const size_t sessionId ) const;
     void removeSession( size_t sessionId );
     void closeAllSessions();
-
-    awaitable<void> dispatch( const size_t sessionId, const json& message )
-    {
-        co_await messageDispatcher_.dispatch( sessionId, message );
-    }
 
     template <typename EnumType, typename ControllerType>
     void addController( EnumType type, ControllerType&& controller )
     {
         messageDispatcher_.addController( type, std::forward<ControllerType>( controller ) );
     }
+
+    awaitable<void> dispatch( const size_t sessionId, const json& message )
+    {
+        co_await messageDispatcher_.dispatch( sessionId, message );
+    }
+
+    awaitable<void> broadcast( const std::string& message );
+    awaitable<void> broadcastExcept( const size_t excludeId, const std::string& message );
+    awaitable<void> sendToSession( const size_t sessionId, const std::string& message );
 
     template <std::ranges::input_range Range>
         requires std::same_as<std::ranges::range_value_t<Range>, std::shared_ptr<Session>>

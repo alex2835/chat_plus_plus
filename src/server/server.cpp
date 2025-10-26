@@ -37,16 +37,9 @@ awaitable<void> Server::startListener( std::string_view address, const int port 
         std::cout << "Info: Starting listener on " << address << ":" << port << "\n";
 
         tcp::acceptor acceptor( executor );
-
-        // Open the acceptor
         acceptor.open( endpoint.protocol() );
-
-        // Allow address reuse
         acceptor.set_option( asio::socket_base::reuse_address( true ) );
-
-        // Bind to the server address
         acceptor.bind( endpoint );
-
         acceptor.listen( asio::socket_base::max_listen_connections );
 
         for ( ;; )
@@ -56,9 +49,7 @@ awaitable<void> Server::startListener( std::string_view address, const int port 
             // Create new session
             size_t sessionId = nextSessionId_++;
             auto session = std::make_shared<Session>( *this, sessionId, std::move( socket ) );
-
-            // Add to sessions map on the strand
-            co_await addSessions( sessionId, session );
+            co_await addSession( sessionId, session );
 
             std::cout << "Info: New session created: " << sessionId << "\n";
 
@@ -73,20 +64,6 @@ awaitable<void> Server::startListener( std::string_view address, const int port 
 
     std::cout << "Listener stopped.\n";
     co_return;
-}
-
-void Server::removeSession( size_t sessionId )
-{
-    asio::post( sessionStrand_,
-        [this, sessionId]()
-        {
-            auto it = sessions_.find( sessionId );
-            if ( it != sessions_.end() )
-            {
-                std::cout << "Info: Removing session " << sessionId << "\n";
-                sessions_.erase( it );
-            }
-        } );
 }
 
 awaitable<void> Server::broadcast( const std::string& message )
@@ -114,11 +91,25 @@ awaitable<void> Server::sendToSession( const size_t sessionId, const std::string
     co_await sendToSessions( sessions, message );
 }
 
-awaitable<void> Server::addSessions( const size_t sessionId, std::shared_ptr<Session> session )
+awaitable<void> Server::addSession( const size_t sessionId, std::shared_ptr<Session> session )
 {
     co_await asio::post( asio::bind_executor( sessionStrand_, asio::use_awaitable ) );
 
     sessions_.emplace( sessionId, std::move( session ) );
+}
+
+void Server::removeSession( size_t sessionId )
+{
+    asio::post( sessionStrand_,
+        [this, sessionId]()
+        {
+            auto it = sessions_.find( sessionId );
+            if ( it != sessions_.end() )
+            {
+                std::cout << "Info: Removing session " << sessionId << "\n";
+                sessions_.erase( it );
+            }
+        } );
 }
 
 awaitable<std::vector<std::shared_ptr<Session>>> Server::getSessions() const
