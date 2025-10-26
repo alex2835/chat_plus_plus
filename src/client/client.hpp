@@ -206,7 +206,7 @@ private:
                             case ServerMessageType::NewMessage:
                             {
                                 auto response = dataJson.get<NewMessage>();
-                                clientData_.addMessage( response.room, response.message );
+                                clientData_.addMessage( response.room, response.chatMessage );
                                 break;
                             }
                         }

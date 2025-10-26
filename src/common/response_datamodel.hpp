@@ -24,6 +24,6 @@ struct NewRoom
 struct NewMessage
 {
     std::string room;
-    ChatMessage message;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE( NewMessage, room, message )
+    ChatMessage chatMessage;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( NewMessage, room, chatMessage )
 };

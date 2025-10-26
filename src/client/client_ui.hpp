@@ -19,7 +19,7 @@ class ChatClientUI
     // Screen
     ScreenInteractive screen_;
 
-    // UI state
+    // UI stSate
     enum Tab
     {
         TabSettings,
@@ -28,10 +28,17 @@ class ChatClientUI
     int selectedTab_ = TabSettings;
     std::vector<std::string> tabEntries_ = { "Settings", "Chat" };
     std::string usernameInput_;
-    std::string messageInput_;
     std::string addresInput_ = "localhost";
     std::string portInput_ = "8080";
+    
+    // Rooms
     std::string selectedRoom_;
+    int selectedRoomIndex_ = 0;
+    std::vector<std::string> roomsRadio_;
+    std::string newRoomInput_;
+    
+    // Message input
+    std::string messageInput_;
 
     // Components
     Component usernameField_;
@@ -42,6 +49,9 @@ class ChatClientUI
 
     Component messageField_;
     Component sendButton_;
+    Component roomsRadiobox_;
+    Component newRoomField_;
+    Component createRoomButton_;
 
     Component tabToggle_;
     Component mainRenderer_;
@@ -86,6 +96,15 @@ private:
         }
     }
 
+    void onCreateRoom()
+    {
+        if ( !newRoomInput_.empty() && client_.isConnected() )
+        {
+            client_.sendChatRoom( newRoomInput_ );
+            newRoomInput_.clear();
+        }
+    }
+
     bool handleEvent( Event event )
     {
         // Tab to cycle through tabs
@@ -112,6 +131,13 @@ private:
         sendButton_ |=
             CatchEvent( [&]( Event event ) { return event == Event::Return ? true : false; } );
 
+        // Room selector
+        roomsRadiobox_ = Radiobox( &roomsRadio_, &selectedRoomIndex_ );
+
+        // New room creation
+        newRoomField_ = Input( &newRoomInput_, "New room name..." );
+        createRoomButton_ = Button( "Create Room", [this] { onCreateRoom(); } );
+
         // Tab selector
         tabToggle_ = Toggle( &tabEntries_, &selectedTab_ );
 
@@ -126,7 +152,16 @@ private:
             } ),
         } );
 
-        auto chatTab = Container::Horizontal( { messageField_, sendButton_ } );
+        auto messageInputContainer = Container::Horizontal( { messageField_, sendButton_ } );
+        auto roomsContainer = Container::Vertical( {
+            roomsRadiobox_,
+            newRoomField_,
+            createRoomButton_,
+        } );
+        auto chatTab = Container::Horizontal( {
+            roomsContainer,
+            Container::Vertical( { messageInputContainer } ),
+        } );
 
         auto mainContainer = Container::Vertical( {
             tabToggle_,
@@ -164,8 +199,13 @@ private:
         {
             document = vbox( {
                 statusBar,
-                renderChatView(),
-                renderMessageInputDisplay(),
+                hbox( {
+                    renderChatRooms(),
+                    vbox( {
+                        renderChatRoomMessages(),
+                        renderMessageInputDisplay(),
+                    } ) | flex,
+                } ) | yflex,
                 separator(),
                 renderTabInfo(),
             } );
@@ -212,23 +252,37 @@ private:
                borderStyled( ROUNDED ) | yflex;
     }
 
-    Element renderChatView()
+    Element renderChatRooms()
     {
-        auto rooms = clientData_.getRoomMessages( selectedRoom_ );
-        std::vector<ChatMessage> msgs;
-        if ( selectedRoom_.empty() )
-            msgs = clientData_.getRoomMessages( selectedRoom_ );
+        // Update selectedRoom_ based on current selection
+        if ( selectedRoomIndex_ >= 0 && selectedRoomIndex_ < roomsRadio_.size() )
+            selectedRoom_ = roomsRadio_[selectedRoomIndex_];
 
+        return vbox( {
+                   text( "Chat Rooms" ) | bold | center,
+                   separator(),
+                   roomsRadiobox_->Render() | vscroll_indicator | frame | yflex,
+                   separator(),
+                   text( "Create New Room" ) | bold,
+                   newRoomField_->Render() | borderStyled( ROUNDED ),
+                   createRoomButton_->Render() |
+                       ( newRoomInput_.empty() || !client_.isConnected() ? dim : color( Color::Green ) ),
+               } ) |
+               borderStyled( ROUNDED ) | size( WIDTH, GREATER_THAN, 20 );
+    }
+
+    Element renderChatRoomMessages()
+    {
+        const auto msgs = clientData_.getRoomMessages( selectedRoom_ );
         Elements messageElements;
         for ( const auto& msg : msgs )
             messageElements.push_back( text( msg.content ) );
-
+ 
         return vbox( {
-                   text( "Chat Messages" ) | bold | center,
-                   separator(),
-                   vbox( messageElements ) | frame | yflex | focusPositionRelative( 1.0f, 0.0f ),
-               } ) |
-               borderStyled( ROUNDED ) | flex;
+                        text( "Chat Messages" ) | bold | center,
+                        separator(),
+                        vbox( messageElements ) | frame | yflex | focusPositionRelative( 1.0f, 0.0f ),
+                     } ) | borderStyled( ROUNDED ) | flex;
     }
 
     Element renderMessageInputDisplay()

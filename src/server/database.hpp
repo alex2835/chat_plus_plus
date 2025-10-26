@@ -18,8 +18,19 @@ public:
     awaitable<void> addMessage( const std::string& room, const ChatMessage& msg )
     {
         co_await asio::post( asio::bind_executor( strand_, asio::use_awaitable ) );
+
+        auto it = chatRooms_.find( room );
+        if ( it != chatRooms_.end() )
+            it->second.messages.push_back( msg );
+    }
+
+    awaitable<void> addRoom( const std::string& room )
+    {
+        co_await asio::post( asio::bind_executor( strand_, asio::use_awaitable ) );
         
-        chatRooms_[room].messages.push_back( msg );
+        auto it = chatRooms_.find( room );
+        if ( it == chatRooms_.end() )
+            chatRooms_.emplace( room, ChatRoom{} );
     }
 
     awaitable<std::vector<ChatMessage>> getRoomMessages( const std::string& room ) const
