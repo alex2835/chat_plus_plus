@@ -200,7 +200,7 @@ private:
                             case ServerMessageType::NewRoom:
                             {
                                 auto response = dataJson.get<NewRoom>();
-                                clientData_.addMessages( response.room, {} );
+                                clientData_.addRoom( response.room );
                                 break;
                             }
                             case ServerMessageType::NewMessage:

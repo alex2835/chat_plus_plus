@@ -75,6 +75,7 @@ private:
     {
         if ( !client_.isConnected() )
         {
+            clientData_.clear();
             clientData_.setUserName( usernameInput_ );
             client_.setServer( addresInput_, portInput_ );
             client_.connect();
@@ -254,9 +255,41 @@ private:
 
     Element renderChatRooms()
     {
-        // Update selectedRoom_ based on current selection
-        if ( selectedRoomIndex_ >= 0 && selectedRoomIndex_ < roomsRadio_.size() )
-            selectedRoom_ = roomsRadio_[selectedRoomIndex_];
+        // Update vector contents in place instead of reassigning
+        auto newRooms = clientData_.getRoomNames();
+        if ( newRooms != roomsRadio_ )
+        {
+            // Save current selection
+            std::string previouslySelected = selectedRoom_;
+
+            // Update vector in place to maintain the pointer reference
+            roomsRadio_.clear();
+            roomsRadio_.insert( roomsRadio_.end(), newRooms.begin(), newRooms.end() );
+
+            // Restore selection if it still exists
+            auto it = std::ranges::find( roomsRadio_, previouslySelected );
+            if ( it != roomsRadio_.end() )
+            {
+                selectedRoomIndex_ = std::distance( roomsRadio_.begin(), it );
+                selectedRoom_ = *it;
+            }
+            else if ( !roomsRadio_.empty() )
+            {
+                selectedRoomIndex_ = 0;
+                selectedRoom_ = roomsRadio_.front();
+            }
+            else
+            {
+                selectedRoomIndex_ = 0;
+                selectedRoom_ = "";
+            }
+        }
+        else
+        {
+            // Sync selectedRoom_ with current index
+            if ( selectedRoomIndex_ >= 0 && selectedRoomIndex_ < roomsRadio_.size() )
+                selectedRoom_ = roomsRadio_[selectedRoomIndex_];
+        }
 
         return vbox( {
                    text( "Chat Rooms" ) | bold | center,

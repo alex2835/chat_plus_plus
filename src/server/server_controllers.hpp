@@ -18,11 +18,11 @@ public:
     {}
     ~OnInitSessionController() override = default;
 
-    awaitable<void> call( const size_t sessionId, const json& msg ) override
+    awaitable<void> call( const size_t sessionId, const json& /*msg*/ ) override
     {
         std::cout << "Info: OnInitSessionController called for session " << sessionId << "\n";
 
-        auto roomsMessages = co_await database_.getRoom();
+        auto roomsMessages = co_await database_.getRooms();
         InitSessionResponse response{ .roomsMessages = std::move( roomsMessages ) };
         auto message = makeMessage( ServerMessageType::InitSessionResponse, response );
         co_await server_.sendToSession( sessionId, message );

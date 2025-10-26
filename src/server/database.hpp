@@ -30,7 +30,7 @@ public:
         
         auto it = chatRooms_.find( room );
         if ( it == chatRooms_.end() )
-            chatRooms_.emplace( room, ChatRoom{} );
+            chatRooms_.emplace( room, ChatRoom{ .name = room } );
     }
 
     awaitable<std::vector<ChatMessage>> getRoomMessages( const std::string& room ) const
@@ -53,7 +53,7 @@ public:
         co_return names;
     }
 
-    awaitable<std::vector<ChatRoom>> getRoom() const
+    awaitable<std::vector<ChatRoom>> getRooms() const
     {
         co_await asio::post( asio::bind_executor( strand_, asio::use_awaitable ) );
 
